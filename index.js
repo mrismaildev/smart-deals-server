@@ -1,20 +1,61 @@
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getAuth } = require('firebase-admin/auth');
+const { verify } = require('crypto');
 
 const app = express();
 const port = process.env.PORT || 3000;
+const uri = process.env.URI;
 
-app.use(cors());
-app.use(express.json());
+//firebase admin SDK
 
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_KEY);
+// const { initializeApp, cert } = require('firebase-admin/app');
+// const { getAuth } = require('firebase-admin/auth');
+// const serviceAccount = require('./smart-deals-firebase-adminsdk.json');
 
-initializeApp({
-  credential: cert(serviceAccount),
-});
+// initializeApp({
+//   credential: cert(serviceAccount),
+// });
+
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+
+
+const rawEnv = process.env.FIREBASE_SERVICE_KEY;
+if (!rawEnv) {
+  console.error('FIREBASE_SERVICE_KEY is missing from environment variables! Please set it in Vercel.');
+}
+// index.js
+const decoded = rawEnv ? Buffer.from(rawEnv, 'base64').toString('utf8') : '{}';
+
+const serviceAccount = rawEnv ? JSON.parse(decoded) : {};
+
+// console.log('--- Debugging Environment ---');
+// if (!rawEnv) {
+//   console.error(
+//     '❌ ERROR: FIREBASE_SERVICE_KEY not found env veriable',
+//   );
+// } else {
+//   console.log('✅ veriaabl get here। length:', rawEnv.length);
+//   try {
+//     const parsed = JSON.parse(rawEnv);
+//     console.log('✅ succesfull json parse Project ID:', parsed.project_id);
+//   } catch (err) {
+//     console.error('❌ JSON problem parsing:', err.message);
+//     console.log('Raw Value snippet:', rawEnv.substring(0, 50) + '...');
+//   }
+// }
+
+if (rawEnv) {
+  initializeApp({
+    credential: cert(serviceAccount),
+  });
+}
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -270,3 +311,5 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Samrt server is runnig on port:${port}`);
 });
+
+module.exports = app;
