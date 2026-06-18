@@ -1,30 +1,17 @@
-const dns = require('dns');
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-require('dotenv').config();
-
 const express = require('express');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const { verify } = require('crypto');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
-const uri = process.env.URI;
 
-//firebase admin SDK
+app.use(cors());
+app.use(express.json());
 
-// const { initializeApp, cert } = require('firebase-admin/app');
-// const { getAuth } = require('firebase-admin/auth');
-// const serviceAccount = require('./smart-deals-firebase-adminsdk.json');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_KEY);
 
-// initializeApp({
-//   credential: cert(serviceAccount),
-// });
-
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getAuth } = require('firebase-admin/auth');
-var serviceAccount = require('./smart-deals-firebase-adminsdk.json');
 initializeApp({
   credential: cert(serviceAccount),
 });
@@ -268,7 +255,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db('admin').command({ ping: 1 });
+    // await client.db('admin').command({ ping: 1 });
     console.log(
       'Pinged your deployment. You successfully connected to MongoDB!',
     );
