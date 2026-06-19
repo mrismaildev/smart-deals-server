@@ -41,22 +41,23 @@ try {
 }
 
 // --- 3. Firebase & JWT Verify Middleware ---
+
 const verifyFireBaseToken = async (req, res, next) => {
   const authorization = req.headers.authorization;
   if (!authorization) {
-    return res.status(401).send({ message: 'Unauthorized access' });
+    return res
+      .status(401)
+      .send({ message: 'Unauthorized access: No token provided' });
   }
 
   const token = authorization.split(' ')[1];
-  if (!token) {
-    return res.status(401).send({ message: 'Unauthorized access' });
-  }
 
   try {
     const decoded = await getAuth().verifyIdToken(token);
     req.decoded = decoded;
     next();
   } catch (err) {
+    console.error('❌ Firebase Token Verify Error:', err.message);
     return res.status(401).send({ message: 'Invalid or expired token' });
   }
 };
