@@ -22,24 +22,31 @@ app.use(cors());
 app.use(express.json());
 
 // --- 2. Firebase Admin SDK Setup ---
+const { initializeApp, cert, getApps } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+
+// --- ২. Firebase Admin SDK Setup (Serverless Optimized) ---
 try {
   const rawEnv = process.env.FIREBASE_SERVICE_KEY;
-  if (rawEnv) {
-    const serviceAccount =
-      typeof rawEnv === 'string' ? JSON.parse(rawEnv) : rawEnv;
-    initializeApp({
-      credential: cert(serviceAccount),
-    });
-    console.log(' Firebase Admin SDK initialized successfully.');
-  } else {
-    console.warn(
-      ' FIREBASE_SERVICE_KEY is missing from environment variables.',
+
+  if (!rawEnv) {
+    console.error(
+      '❌ FATAL ERROR: FIREBASE_SERVICE_KEY is missing from environment variables!',
     );
+  } else {
+    if (getApps().length === 0) {
+      const decodedEnv = Buffer.from(rawEnv, 'base64').toString('utf8');
+      const serviceAccount = JSON.parse(decodedEnv);
+
+      initializeApp({
+        credential: cert(serviceAccount),
+      });
+      console.log('✅ Firebase Admin SDK initialized successfully.');
+    }
   }
 } catch (error) {
-  console.error(' Firebase Init Error:', error.message);
+  console.error('❌ Firebase Init Error at Startup:', error.message);
 }
-
 // --- 3. Firebase & JWT Verify Middleware ---
 
 const verifyFireBaseToken = async (req, res, next) => {
@@ -62,22 +69,22 @@ const verifyFireBaseToken = async (req, res, next) => {
   }
 };
 
-const verifyJwtToken = (req, res, next) => {
-  const authorization = req.headers.authorization;
-  if (!authorization)
-    return res.status(401).send({ message: 'Unauthorized access' });
+// const verifyJwtToken = (req, res, next) => {
+//   const authorization = req.headers.authorization;
+//   if (!authorization)
+//     return res.status(401).send({ message: 'Unauthorized access' });
 
-  const token = authorization.split(' ')[1];
-  if (!token) return res.status(401).send({ message: 'Unauthorized access' });
+//   const token = authorization.split(' ')[1];
+//   if (!token) return res.status(401).send({ message: 'Unauthorized access' });
 
-  jwt.verify(token, process.env.RANDOM_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: 'jwt expired or invalid' });
-    }
-    req.decoded = decoded;
-    next();
-  });
-};
+//   jwt.verify(token, process.env.RANDOM_KEY, (err, decoded) => {
+//     if (err) {
+//       return res.status(401).send({ message: 'jwt expired or invalid' });
+//     }
+//     req.decoded = decoded;
+//     next();
+//   });
+// };
 
 // --- 4. MongoDB Connection Setup ---
 const client = new MongoClient(uri, {
