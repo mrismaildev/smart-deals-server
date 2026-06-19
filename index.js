@@ -184,23 +184,22 @@ app.post('/jwt-token', async (req, res) => {
 });
 
 // Bids API
-app.get('/bids', async (req, res) => {
+app.get('/bids', verifyFireBaseToken, async (req, res) => {
   try {
     const email = req.query.email;
-
 
     if (!email) {
       return res.status(400).send({ message: 'Email is required' });
     }
 
-    console.log(`Testing without token... Fetching bids for: ${email}`);
+    if (email !== req.decoded.email) {
+      return res.status(403).send({ message: 'Forbidden Access' });
+    }
 
-   
     const query = { buyer_email: email };
     const cursor = bidsCollection.find(query);
     const result = await cursor.toArray();
 
-    
     res.send(result);
     console.log(`Successfully fetched ${result.length} bids for ${email}`);
   } catch (error) {
